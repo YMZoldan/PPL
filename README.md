@@ -8,14 +8,40 @@
 - **PSA** לניהול קריאות שירות
 - **Accounting** לסנכרון בנקים והפקת חשבוניות דרך ספק צד-ג' מאושר
 
-## הרצה
+## איך מורידים ומריצים על Windows
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
+### דרישות מוקדמות
+1. התקן **Python 3.11 ומעלה** (סמן בזמן התקנה: "Add python.exe to PATH").
+2. פתח PowerShell בתיקיית הפרויקט.
+
+### אפשרות מהירה (מומלץ)
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start_windows.ps1 -Dev
+```
+
+או בלחיצה כפולה על:
+```text
+scripts\start_windows.bat
+```
+
+הסקריפט:
+- יוצר `.venv`
+- מתקין תלויות
+- מרים את השרת על `http://127.0.0.1:8000`
+
+### אפשרות ידנית
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -e .[dev]
 uvicorn app.main:app --reload
 ```
+
+### בדיקה שהמערכת עלתה
+פתח בדפדפן:
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- Health: `http://127.0.0.1:8000/health`
 
 ## נקודות קצה עיקריות
 
