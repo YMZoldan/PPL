@@ -8,13 +8,29 @@
 - **PSA** לניהול קריאות שירות
 - **Accounting** לסנכרון בנקים והפקת חשבוניות דרך ספק צד-ג' מאושר
 
-## איך מורידים ומריצים על Windows
+## אין לך מה להוריד? הפעלה ישירה על Windows (ללא התקנה)
+
+אם כבר יש לך את הקובץ `Su.exe.exe`, אפשר להפעיל בלי Python ובלי התקנות נוספות:
+
+### אפשרות 1: לחיצה כפולה
+- לחץ פעמיים על `Su.exe.exe`.
+
+### אפשרות 2: דרך סקריפט עזר
+- לחץ פעמיים על `scripts\run_portable_windows.bat`
+- או הרץ ב-CMD מתוך תיקיית הפרויקט:
+```bat
+scripts\run_portable_windows.bat
+```
+
+> אם Windows SmartScreen חוסם: לחץ "More info" ואז "Run anyway" (רק אם אתה סומך על הקובץ).
+
+## הרצה עם קוד המקור (למי שכן רוצה לפתח)
 
 ### דרישות מוקדמות
 1. התקן **Python 3.11 ומעלה** (סמן בזמן התקנה: "Add python.exe to PATH").
 2. פתח PowerShell בתיקיית הפרויקט.
 
-### אפשרות מהירה (מומלץ)
+### אפשרות מהירה
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\start_windows.ps1 -Dev
 ```
@@ -23,11 +39,6 @@ powershell -ExecutionPolicy Bypass -File scripts\start_windows.ps1 -Dev
 ```text
 scripts\start_windows.bat
 ```
-
-הסקריפט:
-- יוצר `.venv`
-- מתקין תלויות
-- מרים את השרת על `http://127.0.0.1:8000`
 
 ### אפשרות ידנית
 ```powershell
