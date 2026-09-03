@@ -8,7 +8,14 @@
 - **PSA** לניהול קריאות שירות
 - **Accounting** לסנכרון בנקים והפקת חשבוניות דרך ספק צד-ג' מאושר
 
-## מיקום הקובץ שביקשת (Su.exe.exe)
+## מהו הקובץ Su.exe.exe
+
+הקובץ הוא **SimpleHelp Remote Access Client** — תוכנת צד-שלישי מסחרית (SimpleHelp Ltd) לגישה ושליטה מרחוק, המשמשת כאן כרכיב Remote Control עבור לקוחות ה-MSP. הוא **לא** נכתב כחלק מהפרויקט הזה ואינו קוד פתוח — זהו קובץ בינארי חיצוני שצורף לריפו.
+
+לפני שמריצים אותו על מחשב כלשהו:
+- ודאו שקיבלתם אותו ממקור מהימן (חשבון SimpleHelp שלכם / מי שאחראי על הפריסה בארגון).
+- אם יש לכם רישיון SimpleHelp פעיל, מומלץ להוריד את הקובץ ישירות מקונסולת ה-SimpleHelp שלכם ולא להסתמך על עותק ישן שיושב בריפו — כך תקבלו גרסה עדכנית וחתומה כראוי.
+- בדקו את הרישיון של SimpleHelp לפני הפצת הקובץ הבינארי הזה מחוץ לארגון שלכם — זו תוכנה מסחרית, לא קוד פתוח.
 
 הקובץ נמצא כאן בפרויקט:
 - `/workspace/PPL/Su.exe.exe`
@@ -42,7 +49,7 @@ Get-ChildItem -Path . -Filter Su.exe.exe -Recurse
 scripts\run_portable_windows.bat
 ```
 
-> אם Windows SmartScreen חוסם: לחץ "More info" ואז "Run anyway" (רק אם אתה סומך על הקובץ).
+> אם Windows SmartScreen חוסם את ההרצה — זו התראת אבטחה לגיטימית, לא תקלה להתעלם ממנה. לפני שממשיכים: ודאו מול המקור (ראו "מהו הקובץ Su.exe.exe" למעלה) שהקובץ אכן הגיע מ-SimpleHelp ולא הוחלף/שונה בדרך. אל תעקפו את ההתראה על קובץ שאינכם בטוחים לגביו.
 
 ## הרצה עם קוד המקור (למי שכן רוצה לפתח)
 
@@ -72,23 +79,67 @@ uvicorn app.main:app --reload
 ### בדיקה שהמערכת עלתה
 פתח בדפדפן:
 - Swagger UI: `http://127.0.0.1:8000/docs`
-- Health: `http://127.0.0.1:8000/health`
+- Health: `http://127.0.0.1:8000/health` (נקודת הקצה היחידה שלא דורשת אימות)
+
+## אימות (Authentication)
+
+כל נקודות הקצה מלבד `/health` דורשות כותרת `X-API-Key`. ברירת המחדל בפיתוח היא `dev-key`; לשינוי הגדירו משתנה סביבה לפני ההרצה:
+
+```powershell
+$env:MSP_API_KEY = "my-secret-key"
+```
+
+דוגמה לקריאה:
+```bash
+curl -H "X-API-Key: dev-key" http://127.0.0.1:8000/customers
+```
+
+## מסד נתונים
+
+הנתונים נשמרים ב-SQLite, בקובץ `msp.db` שנוצר אוטומטית בתיקיית הפרויקט בהרצה הראשונה (נתוני דמו לדוגמה `cust-1`/`ep-1` מוזרעים אוטומטית אם לא קיימים). לשינוי המיקום או למעבר למסד נתונים אחר (למשל PostgreSQL בפרודקשן), הגדירו את `MSP_DATABASE_URL`:
+
+```powershell
+$env:MSP_DATABASE_URL = "postgresql://user:pass@host:5432/msp"
+```
 
 ## נקודות קצה עיקריות
 
+**לקוחות**
+- `GET /customers`
+- `POST /customers`
+
+**RMM**
 - `GET /rmm/endpoints`
+- `POST /rmm/endpoints` — רישום תחנת קצה/agent חדשה
 - `POST /rmm/remote-session/{endpoint_id}`
+- `POST /rmm/endpoints/{endpoint_id}/heartbeat` — צ'ק-אין תקופתי מה-agent
+- `POST /rmm/endpoints/{endpoint_id}/tasks` — הכנסת סקריפט/פקודה לתור
+- `GET /rmm/endpoints/{endpoint_id}/tasks` — רשימת המשימות של תחנה
+- `POST /rmm/tasks/{task_id}/result` — דיווח תוצאה מה-agent
+- `GET /rmm/patches` — סיכום תחנות עם עדכונים ממתינים
+
+**EDR / Backup**
 - `GET /edr/alerts`
 - `GET /backup/status`
-- `POST /psa/tickets`
+
+**PSA**
+- `POST /psa/tickets` — כולל חישוב SLA (`due_at`) לפי עדיפות
+- `GET /psa/tickets` — תמיכה בפילטרים `open_only` ו-`customer_id`
+- `GET /psa/tickets/overdue`
+- `GET /psa/tickets/{ticket_id}`
+- `PATCH /psa/tickets/{ticket_id}` — עדכון סטטוס / אחראי / עדיפות
+- `POST /psa/tickets/{ticket_id}/comments`
+- `GET /psa/tickets/{ticket_id}/comments`
+
+**Accounting**
 - `POST /accounting/banks/sync/{customer_id}`
 - `POST /accounting/invoices`
 
 ## הערה לארגון Production
 
 זהו MVP בלבד. בפרודקשן מומלץ להוסיף:
-- RBAC / SSO
-- מסד נתונים (PostgreSQL)
+- RBAC / SSO (מעבר ל-API key בודד)
+- מסד נתונים ניהולי (PostgreSQL) במקום SQLite
 - תורים אסינכרוניים למשימות RMM/Backup
 - הצפנת סודות ו-KMS
 - חיבור אמיתי לספקי בנקאות וחשבוניות מאושרים
